@@ -28,4 +28,6 @@ with open(args.filename, 'r') as id_file, open(args.outfile, 'w') as outfile:
         data = json.loads(entry)
         indices = [idx for idx in range(len(data["nominals"])) if data["nominals"][idx]==1]
         new_words, new_indices = shift_indices_for_empty_strings(data["words"], indices)
-        outfile.write(json.dumps({"sentence": " ".join(new_words), "indices": new_indices})+"\n")
+
+        outfile.write(json.dumps({"sentence": " ".join(new_words), "indices": new_indices,\
+                "doc_id":data["doc_id"],"sent_id":data["sent_id"]})+"\n")
