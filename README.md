@@ -1,3 +1,10 @@
+This a slightly different repository that fixed some compatibilities issues to work with the code of the https://github.com/veronica320/Zeroshot-Event-Extraction. 
+
+The main problem is that the Zeroshot code needs the sent_id and doc_id, therefore I added it to the output of the SRL. 
+
+One unfixed issue is the difference of tokenization between the SRL and Zero. Double quotes and dash are splitted in one model, and the another framework 
+mantains the these characters together.
+
 # Semantic Role Labeling (SRL)
 
 This repository contains all files created to perform the BERT-based nominal SRL, both using the Nombank dataset and the Ontonotes dataset. It also includes a BERT-based predicate identifier based on the Nombank, STREUSLE, and Bolt datasets. The design of the models in this repository are based on a BERT + linear layer model used in ['Simple BERT Models for Relation Extraction and Semantic Role Labeling'](https://arxiv.org/pdf/1904.05255.pdf).
