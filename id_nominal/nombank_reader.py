@@ -232,7 +232,7 @@ class NombankReader(DatasetReader):
         return data
     
     def text_to_instance(
-            self, og_tokens: List[Token], new_tokens: List[Token], pred_label: List[int]=None
+            self, og_tokens: List[Token], new_tokens: List[Token], pred_label: List[int]=None, doc_id = "", sent_id = ""
         ) -> Instance:
         """
         We take original sentence, `pre-tokenized` input as tokens here, as well as the
@@ -257,6 +257,8 @@ class NombankReader(DatasetReader):
 
         fields["tokens"] = text_field
         metadata_dict["words"] = [x.text for x in new_tokens]
+        metadata_dict["doc_id"] = doc_id
+        metadata_dict["sent_id"] = sent_id
 
         if pred_label is not None:
             if self.bert_tokenizer is not None:

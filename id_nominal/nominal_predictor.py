@@ -73,7 +73,7 @@ class NominalIdPredictor(Predictor):
     def _json_to_instance(self, json_dict: JsonDict):
         raise NotImplementedError("The SRL mdel uses a different API for creating instances.")
 
-    def tokens_to_instances(self, tokens):
+    def tokens_to_instances(self, tokens, doc_id = "", sent_id = ""):
         """
         # Parameters
 
@@ -85,7 +85,7 @@ class NominalIdPredictor(Predictor):
         new_tokens = [Token(t) for t in new_sentence]
         instances: List[Instance] = []
         for i, word in enumerate(tokens):
-            instance = self._dataset_reader.text_to_instance(tokens, new_tokens)
+            instance = self._dataset_reader.text_to_instance(tokens, new_tokens, doc_id = doc_id, sent_id = sent_id)
             instances.append(instance)
         return instances
 
@@ -108,7 +108,16 @@ class NominalIdPredictor(Predictor):
         """
         sentence = json_dict["sentence"]
         tokens = self._tokenizer.split_words(sentence)
-        return self.tokens_to_instances(tokens)
+
+        doc_id = ""
+        if "doc_id" in json_dict:
+            doc_id = json_dict["doc_id"]
+
+        sent_id = ""
+        if "sent_id" in json_dict:
+            sent_id = json_dict["sent_id"]
+
+        return self.tokens_to_instances(tokens, doc_id, sent_id)
 
     @overrides
     def predict_batch_json(self, inputs: List[JsonDict]) -> List[JsonDict]:
@@ -149,7 +158,15 @@ class NominalIdPredictor(Predictor):
         """
         outputs = self._model.forward_on_instances(instances)
 
-        results = {"nominals": outputs[0]["predicate_indicator"], "words": outputs[0]["words"]}
+        doc_id = ""
+        sent_id = ""
+
+        if len(instances) > 0:
+            doc_id = instances[0]["metadata"].metadata["doc_id"]
+            sent_id = instances[0]["metadata"].metadata["sent_id"]
+
+
+        results = {"nominals": outputs[0]["predicate_indicator"], "words": outputs[0]["words"], "doc_id":doc_id, "sent_id":sent_id}
         return sanitize(results)
 
     @overrides
@@ -160,6 +177,15 @@ class NominalIdPredictor(Predictor):
         instances = self._sentence_to_srl_instances(inputs)
 
         if not instances:
-            return sanitize({"nominals": [], "words": self._tokenizer.split_words(inputs["sentence"])})
+            doc_id = ""
+            if "doc_id" in inputs:
+                doc_id = inputs["doc_id"]
+
+            sent_id = ""
+            if "sent_id" in inputs:
+                sent_id = inputs["sent_id"]
+
+            return sanitize({"nominals": [], "words": self._tokenizer.split_words(inputs["sentence"]),\
+                    "doc_id":doc_id, "sent_id":sent_id})
 
         return self.predict_instances(instances)
