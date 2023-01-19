@@ -102,7 +102,7 @@ class NomSenseSRLPredictor(Predictor):
     def _json_to_instance(self, json_dict: JsonDict):
         raise NotImplementedError("The SRL mdel uses a different API for creating instances.")
 
-    def tokens_to_instances(self, tokens, indices):
+    def tokens_to_instances(self, tokens, indices, doc_id = "", sent_id = ""):
         """
         # Parameters
 
@@ -120,7 +120,7 @@ class NomSenseSRLPredictor(Predictor):
             nom_labels = [0 for _ in new_tokens]
             for new_i in new_nom_idx:
                 nom_labels[new_i] = 1
-            instance = self._dataset_reader.text_to_instance(tokens, new_tokens, nom_labels)
+            instance = self._dataset_reader.text_to_instance(tokens, new_tokens, nom_labels, doc_id = doc_id, sent_id = sent_id)
             instances.append(instance)
         return instances
 
@@ -144,7 +144,16 @@ class NomSenseSRLPredictor(Predictor):
         sentence = json_dict["sentence"]
         indices = json_dict["indices"]
         tokens = self._tokenizer.split_words(sentence)
-        return self.tokens_to_instances(tokens, indices)
+
+        doc_id = ""
+        if "doc_id" in json_dict:
+            doc_id = json_dict["doc_id"]
+
+        sent_id = ""
+        if "sent_id" in json_dict:
+            sent_id = json_dict["sent_id"]
+
+        return self.tokens_to_instances(tokens, indices, doc_id, sent_id)
 
     @overrides
     def predict_batch_json(self, inputs: List[JsonDict]) -> List[JsonDict]:
@@ -206,7 +215,14 @@ class NomSenseSRLPredictor(Predictor):
         """
         outputs = self._model.forward_on_instances(instances)
 
-        results = {"nominals": [], "words": outputs[0]["words"]}
+        doc_id = ""
+        sent_id = ""
+
+        if len(instances) > 0:
+            doc_id = instances[0]["metadata"].metadata["doc_id"]
+            sent_id = instances[0]["metadata"].metadata["sent_id"]
+
+        results = {"nominals": [], "words": outputs[0]["words"], "doc_id":doc_id, "sent_id":sent_id}
         for output in outputs:
             tags = output["tags"]
             description = self.make_srl_string(output["words"], tags)
@@ -223,6 +239,14 @@ class NomSenseSRLPredictor(Predictor):
         instances = self._sentence_to_srl_instances(inputs)
 
         if not instances:
-            return sanitize({"nominals": [], "words": self._tokenizer.split_words(inputs["sentence"])})
+            doc_id = ""
+            if "doc_id" in inputs:
+                doc_id = inputs["doc_id"]
+
+            sent_id = ""
+            if "sent_id" in inputs:
+                sent_id = inputs["sent_id"]
+            return sanitize({"nominals": [], "words": self._tokenizer.split_words(inputs["sentence"]),\
+                "doc_id":doc_id, "sent_id":sent_id})
 
         return self.predict_instances(instances)

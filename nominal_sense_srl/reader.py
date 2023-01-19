@@ -375,7 +375,7 @@ class NombankSenseSRLReader(DatasetReader):
         return data
 
     def text_to_instance(
-            self, og_tokens: List[Token], new_tokens: List[Token], nom_label: List[int], new_tags: List[str]=None, sense: str=None,
+            self, og_tokens: List[Token], new_tokens: List[Token], nom_label: List[int], new_tags: List[str]=None, sense: str=None, doc_id: str = "", sent_id: str = "",
             ) -> Instance:
         """
         We take original sentence, `pre-tokenized` input as tokens here, as 
@@ -421,6 +421,8 @@ class NombankSenseSRLReader(DatasetReader):
         metadata_dict["words"] = [x.text for x in new_tokens]
         metadata_dict["nominal"] = nom
         metadata_dict["nom_index"] = nom_index
+        metadata_dict["doc_id"] = doc_id
+        metadata_dict["sent_id"] = sent_id
 
         if new_tags:
             if self.bert_tokenizer is not None:
